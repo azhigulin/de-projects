@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 from datetime import datetime, timedelta
+import os
 
 default_args = {
     'owner': 'airflow',
@@ -13,16 +14,19 @@ default_args = {
 }
 
 dag = DAG(
-    'trades_dag', default_args=default_args, schedule_interval=timedelta(days=1)
+    'trades_dag',
+    default_args=default_args,
+    schedule_interval=None
 )
 
 run_dbt = DockerOperator(
     task_id='run_dbt',
-    image='02_data_platform-dbt-1', 
+    image='02_data_platform_alpaca_markets-dbt',
     api_version='auto',
     auto_remove=True,
-    command='dbt run --select fct_pdt_count --profiles-dir . --project-dir /path/to/dbt_trades', 
-    network_mode='tradesnetwork', 
+    command='dbt run --select fct_pdt_count --profiles-dir . --project-dir dbt_trades',
+    docker_url=os.environ.get('DOCKER_URL'),
+    network_mode='02_data_platform_alpaca_markets_tradesnetwork',
     dag=dag,
 )
 

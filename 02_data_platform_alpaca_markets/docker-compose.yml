@@ -6,6 +6,7 @@ services:
       - "5433:5432"
     volumes:
       - ./db/data:/home/data
+      - ./db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
       - tradesnetwork
 
@@ -32,23 +33,28 @@ services:
       - tradesnetwork
 
   airflow:
+    user: "${AIRFLOW_UID:-50000}:${DOCKER_GID:-1001}"
     environment:
-      - AIRFLOW_USERNAME
-      - AIRFLOW_PASSWORD
-      - AIRFLOW_FIRSTNAME
-      - AIRFLOW_LASTNAME
-      - AIRFLOW_ROLE
-      - AIRFLOW_EMAIL
+      - AIRFLOW_USERNAME=${AIRFLOW_USERNAME}
+      - AIRFLOW_PASSWORD=${AIRFLOW_PASSWORD}
+      - AIRFLOW_FIRSTNAME=${AIRFLOW_FIRSTNAME}
+      - AIRFLOW_LASTNAME=${AIRFLOW_LASTNAME}
+      - AIRFLOW_ROLE=${AIRFLOW_ROLE}
+      - AIRFLOW_EMAIL=${AIRFLOW_EMAIL}
       - AIRFLOW__CORE__DAGS_FOLDER=/usr/local/airflow/dags
+      - DOCKER_URL=${DOCKER_URL}
     build: ./airflow
     ports:
       - "8090:8080"
     volumes:
       - ./airflow/dags:/usr/local/airflow/dags
       - ./airflow/output:/usr/local/airflow/output
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - db
     command: airflow standalone
+    networks:
+      - tradesnetwork
 
 networks:
   tradesnetwork:

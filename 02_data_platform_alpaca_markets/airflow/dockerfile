@@ -1,4 +1,4 @@
-FROM apache/airflow:latest
+FROM apache/airflow:2.7.1
 
 # Install additional dependencies (if any)
 RUN pip install 'apache-airflow[docker]'
@@ -9,7 +9,16 @@ WORKDIR /usr/local/airflow
 COPY entrypoint.sh ./entrypoint.sh
 
 USER root
+ARG DOCKER_GID=1001
+RUN groupadd -g ${DOCKER_GID} docker
+
+RUN usermod -aG docker airflow
+RUN touch /var/run/docker.sock && \
+    chown root:docker /var/run/docker.sock && \
+    chmod 660 /var/run/docker.sock
+
 RUN chmod +x entrypoint.sh
+
 USER airflow
 
 ENTRYPOINT ["./entrypoint.sh"]
